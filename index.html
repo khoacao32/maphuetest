@@ -45,40 +45,33 @@
         }).addTo(map);
 
 
-        // 3. Đọc và hiển thị file map.json
-
+     // 3. Đọc và hiển thị file map.json
         fetch('map.json')
-
             .then(function(response) {
-
                 return response.json();
-
             })
-
             .then(function(data) {
-
                 // Vẽ dữ liệu từ file JSON lên bản đồ
-
-                L.geoJSON(data, {
-
+                var geoLayer = L.geoJSON(data, {
+                    // PHẦN 1: CHỈNH CÁCH HIỆN RANH GIỚI
                     style: {
-
                         color: "red",      // Màu đường viền ranh giới
-
-                        weight: 3,         // Độ dày đường viền
-
-                        fillOpacity: 0.1   // Độ đậm nhạt của màu nền bên trong
-
+                        weight: 2,         // Làm đường viền mảnh lại cho dễ nhìn
+                        fillOpacity: 0     // ĐẶT BẰNG 0: Để nó không tô màu đỏ đè lên bản đồ, nhìn xuyên thấu được đường xá
+                    },
+                    
+                    // PHẦN 2: LỌC BỎ CÁC ĐIỂM XANH (MARKERS)
+                    filter: function(feature) {
+                        // Chỉ giữ lại những gì không phải là "Point" (điểm đơn lẻ)
+                        return feature.geometry.type !== "Point";
                     }
-
                 }).addTo(map);
 
+                // Tự động zoom vào vùng Huế
+                map.fitBounds(geoLayer.getBounds());
             })
-
             .catch(function(error) {
-
                 console.error("Lỗi: Không tìm thấy hoặc không đọc được file map.json", error);
-
             });
 
     </script>
