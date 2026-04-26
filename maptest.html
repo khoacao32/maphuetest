@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Hue Map </title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* Làm cho bản đồ full màn hình điện thoại */
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; }
+        
+        /* Chỉnh màu sắc nút bấm cho dễ nhìn đêm */
+        .leaflet-popup-content-wrapper { background: #2c3e50; color: white; }
+        .leaflet-popup-tip { background: #2c3e50; }
+        .call-btn {
+            display: inline-block; padding: 10px; background: #27ae60;
+            color: white; text-decoration: none; border-radius: 5px; margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map" style="height: 100vh; width: 100vw;"></div>
+
+    <script>
+        // 1. Khởi tạo bản đồ - Đặt tâm tại Huế
+        // Tọa độ [16.46, 107.59] lấy từ chính file JSON của bạn
+        var map = L.map('map').setView([16.4639, 107.5863], 13);
+
+        // 2. Thêm lớp nền bản đồ (Dùng OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        // 3. Đọc và hiển thị file map.json
+        fetch('map.json')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                // Vẽ dữ liệu từ file JSON lên bản đồ
+                L.geoJSON(data, {
+                    style: {
+                        color: "red",      // Màu đường viền ranh giới
+                        weight: 3,         // Độ dày đường viền
+                        fillOpacity: 0.1   // Độ đậm nhạt của màu nền bên trong
+                    }
+                }).addTo(map);
+            })
+            .catch(function(error) {
+                console.error("Lỗi: Không tìm thấy hoặc không đọc được file map.json", error);
+            });
+    </script>
+</body>
