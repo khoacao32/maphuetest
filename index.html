@@ -23,53 +23,64 @@
     </style>
 </head>
 <body>
-    <div style="
-        position: fixed; 
-        bottom: 10px; 
-        right: 10px; 
-        z-index: 1000; 
-        background: rgba(255, 255, 255, 0.8); 
-        padding: 5px 10px; 
-        border-radius: 5px; 
-        font-family: Arial, sans-serif; 
-        font-weight: bold;
-        font-size: 14px;
-        border: 1px solid #ccc;
-    ">
-        Phát triển bởi: Khoa Cao
-    </div>
 
     <div id="map" style="height: 100vh; width: 100vw;"></div>
 
+
     <script>
+
         // 1. Khởi tạo bản đồ - Đặt tâm tại Huế
+
+        // Tọa độ [16.46, 107.59] lấy từ chính file JSON của bạn
+
         var map = L.map('map').setView([16.4639, 107.5863], 13);
 
-        // 2. Thêm lớp nền bản đồ
+
+        // 2. Thêm lớp nền bản đồ (Dùng OpenStreetMap)
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
             attribution: '&copy; OpenStreetMap'
+
         }).addTo(map);
 
+
         // 3. Đọc và hiển thị file map.json
+
         fetch('map.json')
+
             .then(function(response) {
+
                 return response.json();
+
             })
+
             .then(function(data) {
+
                 // Vẽ dữ liệu từ file JSON lên bản đồ
-                var geoLayer = L.geoJSON(data, {
+
+                L.geoJSON(data, {
+
                     style: {
-                        color: "red",      
-                        weight: 3,         
-                        fillOpacity: 0.1   
+
+                        color: "red",      // Màu đường viền ranh giới
+
+                        weight: 3,         // Độ dày đường viền
+
+                        fillOpacity: 0.1   // Độ đậm nhạt của màu nền bên trong
+
                     }
+
                 }).addTo(map);
 
-                // THÊM DÒNG NÀY: Tự động zoom vào vùng Huế cho đẹp
-                map.fitBounds(geoLayer.getBounds());
             })
+
             .catch(function(error) {
+
                 console.error("Lỗi: Không tìm thấy hoặc không đọc được file map.json", error);
+
             });
+
     </script>
-</body>
+
+</body> 
