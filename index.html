@@ -128,18 +128,26 @@ var map = L.map('map', {
                             var marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)]).addTo(map);
                             
                             var popupHtml = `
-                                <div class="popup-content">
-                                    <b style="font-size:15px; color:#d32f2f;">${p.name}</b><br>
-                                    📍 ${p.address || 'Đang cập nhật'}<br>
-                                    ⏰ Giờ: ${p.hours || '24/24'}<br>
-                                    <a href="tel:${p.phone}" class="btn-call">📞 GỌI NGAY: ${p.phone}</a>
-                                    <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" 
-                                       target="_blank" 
-                                       style="display:block; text-align:center; margin-top:8px; font-size:12px; color:#666;">
-                                       Mở trong Google Maps
-                                    </a>
-                                </div>
-                            `;
+    <div class="popup-content" style="text-align: center;">
+        ${p.image ? `<img src="${p.image}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; margin-bottom:10px;">` : ''}
+        
+        <b style="font-size:16px; color:#d32f2f; display:block; margin-bottom:5px;">${p.name}</b>
+        
+        <div style="text-align: left; font-size: 13px;">
+            📍 <b>Địa chỉ:</b> ${p.address || 'Đang cập nhật'}<br>
+            📝 <b>Ghi chú:</b> ${p.note || 'Không có'}<br>
+            ⏰ <b>Giờ:</b> ${p.hours || '24/24'}<br>
+        </div>
+
+        <a href="tel:${p.phone}" class="btn-call">📞 GỌI NGAY: ${p.phone}</a>
+        
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" 
+           target="_blank" 
+           style="display:block; text-align:center; margin-top:10px; font-size:12px; color:#666; text-decoration:none;">
+           🗺️ Chỉ đường bằng Google Maps
+        </a>
+    </div>
+`;
                             marker.bindPopup(popupHtml);
                         }
                     });
