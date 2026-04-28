@@ -3,6 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Cứu Hộ Xe TP Huế</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#28a745">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; background: #ccd1d1; font-family: sans-serif; }
+        #map { height: 100vh; width: 100vw; background: #ccd1d1; }
+        .locate-btn {
+            position: fixed; bottom: 80px; right: 15px; z-index: 1000;
+            background: white; width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; font-size: 24px;
+        }
+        .credits {
+            position: fixed; bottom: 10px; left: 10px; z-index: 1000;
+            background: white; padding: 10px 15px; border-radius: 25px; font-size: 13px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+    <button class="locate-btn" onclick="findMe()">📍</button>
+    <div class="credits">Ứng dụng Cứu Hộ Huế</div>
+
+    <script>
+        // Cấu hình bản đồ
+        var map = L.map('map', { zoomControl: false, minZoom: 13, maxZoom: 22 });
+        map.setView([16.4637, 107.5909], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxNativeZoom: 19, maxZoom: 22
+        }).addTo(map);
+
+        // Icon
+        var xanhIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+        var doIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', iconSize: [25, 41], iconAnchor: [12, 41] });
+
+        var markersGroup = L.layerGroup().addTo(map);
+
+        function render(data) {
+            markersGroup.clearLayers();
+            data.forEach(p => {
+                if (p.lat && p.lng) {
+                    let icon = (p.type === 'xang') ? xanhIcon : doIcon;
+                    L.marker([p.lat, p.lng], {icon: icon})
+                     .addTo(markersGroup)
+                     .bindPopup(`<div style="text-align:center"><b>${p.name}</b><br>📞 ${p.phone}<br><a href="tel:${p.phone}" style="display:block; background:#28a745; color:white; padding:8px; border-radius:5px; margin-top:5px; text-decoration:none; font-weight:bold;">GỌI NGAY</a></div>`);
+                }
+            });
+        }
+
+        // Thay link CSV của bạn vào đây
+        const sheet_url = 'LINK_CSV_GOOGLE_SHEETS_CUA_BAN';
+
+        // Lấy dữ liệu cũ trong máy hiện lên trước
+        const cache = localStorage.getItem('hue_rescue_data');
+        if (cache) render(JSON.parse(cache));
+
+        // Cập nhật dữ liệu mới từ Sheets
+        Papa.parse(sheet_url, {
+            download: true,
+            header: true,
+            complete: function(results) {
+                localStorage.setItem('hue_rescue_data', JSON.stringify(results.data));
+                render(results.data);
+            }
+        });
+
+        function findMe() { map.locate({setView: true, maxZoom: 17}); }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Cứu Hộ Xe TP Huế - Cao Anh Khoa</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
