@@ -2,78 +2,158 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Hue Map </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Cứu Hộ Xe TP Huế </title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
-        /* Làm cho bản đồ full màn hình điện thoại */
-        body { margin: 0; padding: 0; }
+        /* Tràn màn hình */
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         #map { height: 100vh; width: 100vw; }
-        
-        /* Chỉnh màu sắc nút bấm cho dễ nhìn đêm */
-        .leaflet-popup-content-wrapper { background: #2c3e50; color: white; }
-        .leaflet-popup-tip { background: #2c3e50; }
-        .call-btn {
-            display: inline-block; padding: 10px; background: #27ae60;
-            color: white; text-decoration: none; border-radius: 5px; margin-top: 5px;
+
+        /* Nút định vị GPS */
+        .locate-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 20px;
+            border: none;
+        }
+
+        /* Thẻ thông tin cá nhân */
+        .credits {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+        }
+        .credits a { color: #007bff; text-decoration: none; font-weight: bold; }
+
+        /* Popup thông tin */
+        .popup-content { min-width: 180px; line-height: 1.6; }
+        .btn-call {
+            display: block;
+            background: #28a745;
+            color: white !important;
+            text-align: center;
+            padding: 8px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div id="map" style="height: 100vh; width: 100vw;"></div>
+    <div id="map"></div>
 
+    <button class="locate-btn" onclick="findMe()" title="Vị trí của tôi">📍</button>
+
+    <div class="credits">
+        Phát triển bởi <b>Cao Anh Khoa</b> | 
+        <a href="https://www.facebook.com/khoa.cao.511348" target="_blank">Phản hồi Facebook</a>
+    </div>
 
     <script>
+        // 1. Cấu hình vùng giới hạn (TP Huế)
+// Tọa độ góc dưới bên trái và góc trên bên phải của Huế
+var hueBounds = L.latLngBounds(
+    L.latLng(16.3500, 107.5000), // Góc Tây Nam
+    L.latLng(16.5500, 107.7000)  // Góc Đông Bắc
+);
 
-        // 1. Khởi tạo bản đồ - Đặt tâm tại Huế
+var map = L.map('map', {
+    zoomControl: false,
+    maxBounds: hueBounds,        // Không cho kéo ra khỏi vùng này
+    maxBoundsViscosity: 1.0,     // Độ "cứng" của biên (1.0 là không cho kéo lệch tí nào)
+    minZoom: 13,                 // Không cho thu nhỏ quá mức (nhìn rõ thành phố)
+    maxZoom: 18                  // Không cho phóng to quá mức (vỡ ảnh)
+}).setView([16.4637, 107.5909], 14);
 
-        // Tọa độ [16.46, 107.59] lấy từ chính file JSON của bạn
+        // 2. Các lớp nền (Bản đồ đường & Vệ tinh)
+        var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-        var map = L.map('map').setView([16.4639, 107.5863], 13);
+        var baseMaps = {
+            "Bản đồ đường": streetLayer,
+            "Ảnh vệ tinh": satelliteLayer
+        };
+        L.control.layers(baseMaps).addTo(map);
+        L.control.zoom({ position: 'topright' }).addTo(map); // Chuyển nút +/- sang góc trên bên phải
 
+        // 3. Xử lý Định vị người dùng
+        var userCircle;
+        function findMe() {
+            map.locate({setView: true, maxZoom: 16});
+        }
 
-        // 2. Thêm lớp nền bản đồ (Dùng OpenStreetMap)
+        map.on('locationfound', function(e) {
+            if (userCircle) map.removeLayer(userCircle);
+            userCircle = L.circle(e.latlng, {
+                radius: 15, color: '#1976D2', fillColor: '#2196F3', fillOpacity: 0.5
+            }).addTo(map).bindPopup("Bạn đang ở đây").openPopup();
+        });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // 4. Đọc dữ liệu từ Google Sheets
+        // DÁN LINK CSV CỦA BẠN VÀO DƯỚI ĐÂY
+        var csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQm_NcV6KGhVxRsIrv2xN3GMf03tD59mpn7Z2ogkdT-_9oR9JO5cCVtUGuQWCs0jwwF_HYFgCds-YHd/pub?output=csv';
 
-            attribution: '&copy; OpenStreetMap'
-
-        }).addTo(map);
-
-
-     // 3. Đọc và hiển thị file map.json
-        fetch('map.json')
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
-                // Vẽ dữ liệu từ file JSON lên bản đồ
-                var geoLayer = L.geoJSON(data, {
-                    // PHẦN 1: CHỈNH CÁCH HIỆN RANH GIỚI
-                    style: {
-                        color: "red",      // Màu đường viền ranh giới
-                        weight: 2,         // Làm đường viền mảnh lại cho dễ nhìn
-                        fillOpacity: 0     // ĐẶT BẰNG 0: Để nó không tô màu đỏ đè lên bản đồ, nhìn xuyên thấu được đường xá
-                    },
-                    
-                    // PHẦN 2: LỌC BỎ CÁC ĐIỂM XANH (MARKERS)
-                    filter: function(feature) {
-                        // Chỉ giữ lại những gì không phải là "Point" (điểm đơn lẻ)
-                        return feature.geometry.type !== "Point";
-                    }
-                }).addTo(map);
-
-                // Tự động zoom vào vùng Huế
-                map.fitBounds(geoLayer.getBounds());
-            })
-            .catch(function(error) {
-                console.error("Lỗi: Không tìm thấy hoặc không đọc được file map.json", error);
+        function loadData() {
+            Papa.parse(csv_url, {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    results.data.forEach(function(p) {
+                        if (p.lat && p.lng) {
+                            var marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)]).addTo(map);
+                            
+                            var popupHtml = `
+                                <div class="popup-content">
+                                    <b style="font-size:15px; color:#d32f2f;">${p.name}</b><br>
+                                    📍 ${p.address || 'Đang cập nhật'}<br>
+                                    ⏰ Giờ: ${p.hours || '24/24'}<br>
+                                    <a href="tel:${p.phone}" class="btn-call">📞 GỌI NGAY: ${p.phone}</a>
+                                    <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" 
+                                       target="_blank" 
+                                       style="display:block; text-align:center; margin-top:8px; font-size:12px; color:#666;">
+                                       Mở trong Google Maps
+                                    </a>
+                                </div>
+                            `;
+                            marker.bindPopup(popupHtml);
+                        }
+                    });
+                }
             });
+        }
+
+        // Kiểm tra link và chạy
+        if (csv_url.includes('google.com')) {
+            loadData();
+        } else {
+            alert("Vui lòng dán link CSV từ Google Sheets vào code!");
+        }
 
     </script>
-
-</body> 
+</body>
+</html>
