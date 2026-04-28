@@ -3,63 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Cứu Hộ Xe TP Huế </title>
+    <title>Cứu Hộ Xe TP Huế - Cao Anh Khoa</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
-        /* Tràn màn hình */
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        #map { height: 100vh; width: 100vw; }
+        body { margin: 0; padding: 0; font-family: -apple-system, system-ui, sans-serif; background: #f4f4f4; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
 
-        /* Nút định vị GPS */
+        /* Nút định vị */
         .locate-btn {
-            position: fixed;
-            bottom: 80px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            cursor: pointer;
-            font-size: 20px;
-            border: none;
+            position: fixed; bottom: 180px; right: 15px; z-index: 1000;
+            background: white; width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: none; font-size: 24px; cursor: pointer;
         }
 
-        /* Thẻ thông tin cá nhân */
+        /* Thẻ thông tin người phát hành (Nằm trên bảng cứu hộ) */
         .credits {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border: 1px solid #ddd;
+            position: fixed; bottom: 135px; left: 10px; z-index: 1001;
+            background: rgba(255, 255, 255, 0.95); padding: 5px 12px;
+            border-radius: 15px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid #eee;
         }
-        .credits a { color: #007bff; text-decoration: none; font-weight: bold; }
+        .credits a { color: #1877F2; text-decoration: none; font-weight: bold; }
 
-        /* Popup thông tin */
-        .popup-content { min-width: 180px; line-height: 1.6; }
+        /* Danh sách cứu hộ nhanh */
+        .emergency-list {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: white; padding: 15px 15px 25px 15px;
+            border-radius: 20px 20px 0 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        }
+        .emergency-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+        }
+        .btn-call-quick {
+            background: #d32f2f; color: white; text-decoration: none;
+            padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 13px;
+        }
+
+        .popup-content { min-width: 180px; text-align: center; }
         .btn-call {
-            display: block;
-            background: #28a745;
-            color: white !important;
-            text-align: center;
-            padding: 8px;
-            border-radius: 5px;
-            text-decoration: none;
-            margin-top: 10px;
-            font-weight: bold;
+            display: block; background: #28a745; color: white !important;
+            padding: 10px; border-radius: 8px; text-decoration: none;
+            margin-top: 10px; font-weight: bold;
         }
     </style>
 </head>
@@ -67,117 +60,57 @@
 
     <div id="map"></div>
 
-    <button class="locate-btn" onclick="findMe()" title="Vị trí của tôi">📍</button>
+    <button class="locate-btn" onclick="findMe()">📍</button>
 
     <div class="credits">
-        Phát triển bởi <b>Cao Anh Khoa</b> | 
+        🚀 Phát hành bởi: <b>Cao Anh Khoa</b> | 
         <a href="https://www.facebook.com/khoa.cao.511348" target="_blank">Phản hồi Facebook</a>
     </div>
 
+    <div class="emergency-list">
+        <div style="font-weight: bold; margin-bottom: 8px; color: #d32f2f; font-size: 15px;">🚨 CỨU HỘ KHẨN CẤP</div>
+        
+        <div class="emergency-item">
+            <div><b>Đội Cứu Hộ 01</b><br><small>Khu vực Trung tâm</small></div>
+            <a href="tel:0905123456" class="btn-call-quick">GỌI</a>
+        </div>
+        
+        <div class="emergency-item">
+            <div><b>Vá lốp lưu động</b><br><small>Phục vụ 24/24</small></div>
+            <a href="tel:0123456789" class="btn-call-quick">GỌI</a>
+        </div>
+    </div>
+
     <script>
-        // 1. Cấu hình vùng giới hạn (TP Huế)
-// Tọa độ góc dưới bên trái và góc trên bên phải của Huế
-var hueBounds = L.latLngBounds(
-    L.latLng(16.3500, 107.5000), // Góc Tây Nam
-    L.latLng(16.5500, 107.7000)  // Góc Đông Bắc
-);
+        const hueBounds = L.latLngBounds(L.latLng(16.3500, 107.5000), L.latLng(16.5500, 107.7000));
 
-var map = L.map('map', {
-    zoomControl: false,
-    maxBounds: hueBounds,        // Không cho kéo ra khỏi vùng này
-    maxBoundsViscosity: 1.0,     // Độ "cứng" của biên (1.0 là không cho kéo lệch tí nào)
-    minZoom: 13,                 // Không cho thu nhỏ quá mức (nhìn rõ thành phố)
-    maxZoom: 18                  // Không cho phóng to quá mức (vỡ ảnh)
-}).setView([16.4637, 107.5909], 14);
+        const map = L.map('map', {
+            zoomControl: false,
+            maxBounds: hueBounds,
+            maxBoundsViscosity: 1.0,
+            minZoom: 13,
+            maxZoom: 20 
+        }).setView([16.4637, 107.5909], 14);
 
-        // 2. Các lớp nền (Bản đồ đường & Vệ tinh)
-        var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
-        var baseMaps = {
-            "Bản đồ đường": streetLayer,
-            "Ảnh vệ tinh": satelliteLayer
-        };
-        L.control.layers(baseMaps).addTo(map);
-        L.control.zoom({ position: 'topright' }).addTo(map); // Chuyển nút +/- sang góc trên bên phải
+        const xanhIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
 
-        // 3. Hàm Định vị và Zoom (Giữ chặt giới hạn Huế)
-        var userMarker;
+        const doIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+
+        let userMarker, userCircle;
         function findMe() {
-            map.locate({
-                setView: false, // Tắt tự động để mình kiểm soát bằng code dưới
-                enableHighAccuracy: true
-            });
+            map.locate({ setView: false, enableHighAccuracy: true });
         }
 
         map.on('locationfound', function(e) {
-            if (userMarker) map.removeLayer(userMarker);
-            
-            // Cắm ghim vị trí người dùng
-            userMarker = L.marker(e.latlng).addTo(map).bindPopup("Bạn đang ở đây!").openPopup();
-            
-            // KIỂM TRA: Nếu vị trí nằm TRONG hàng rào Huế thì mới cho phép bay tới
-            if (hueBounds.contains(e.latlng)) {
-                map.flyTo(e.latlng, 16); 
-            } else {
-                alert("Vị trí của bạn nằm ngoài vùng hỗ trợ tại TP Huế!");
-                // Nếu ngoài Huế, chỉ zoom nhẹ để người dùng thấy cái ghim phía xa
-                map.setZoom(13); 
-            }
-        });
-
-        map.on('locationerror', function() {
-            alert("Lỗi: Không lấy được vị trí. Hãy bật GPS và cho phép truy cập!");
-        });
-
-        // 4. Đọc dữ liệu từ Google Sheets
-        // DÁN LINK CSV CỦA BẠN VÀO DƯỚI ĐÂY
-        var csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQm_NcV6KGhVxRsIrv2xN3GMf03tD59mpn7Z2ogkdT-_9oR9JO5cCVtUGuQWCs0jwwF_HYFgCds-YHd/pub?output=csv';
-
-        function loadData() {
-            Papa.parse(csv_url, {
-                download: true,
-                header: true,
-                complete: function(results) {
-                    results.data.forEach(function(p) {
-                        if (p.lat && p.lng) {
-                            var marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)]).addTo(map);
-                            
-                            var popupHtml = `
-    <div class="popup-content" style="text-align: center;">
-        ${p.image ? `<img src="${p.image}" style="width:100%; max-height:150px; object-fit:cover; border-radius:8px; margin-bottom:10px;">` : ''}
-        
-        <b style="font-size:16px; color:#d32f2f; display:block; margin-bottom:5px;">${p.name}</b>
-        
-        <div style="text-align: left; font-size: 13px;">
-            📍 <b>Địa chỉ:</b> ${p.address || 'Đang cập nhật'}<br>
-            📝 <b>Ghi chú:</b> ${p.note || 'Không có'}<br>
-            ⏰ <b>Giờ:</b> ${p.hours || '24/24'}<br>
-        </div>
-
-        <a href="tel:${p.phone}" class="btn-call">📞 GỌI NGAY: ${p.phone}</a>
-        
-        <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" 
-           target="_blank" 
-           style="display:block; text-align:center; margin-top:10px; font-size:12px; color:#666; text-decoration:none;">
-           🗺️ Chỉ đường bằng Google Maps
-        </a>
-    </div>
-`;
-                            marker.bindPopup(popupHtml);
-                        }
-                    });
-                }
-            });
-        }
-
-        // Kiểm tra link và chạy
-        if (csv_url.includes('google.com')) {
-            loadData();
-        } else {
-            alert("Vui lòng dán link CSV từ Google Sheets vào code!");
-        }
-
-    </script>
-</body>
-</html>
+            if
