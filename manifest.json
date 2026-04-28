@@ -1,0 +1,16 @@
+{
+  "name": "Cứu Hộ Xe Máy Huế",
+  "short_name": "Cứu Hộ",
+  "description": "Tìm cây xăng và tiệm sửa xe tại Huế nhanh nhất",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#28a745",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
