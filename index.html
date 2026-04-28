@@ -113,7 +113,7 @@
             data.forEach(function(p) {
                 if (p.lat && p.lng) {
                     // Cây xăng = xanh, Sửa xe = sua (đỏ)
-                    var iconChon = (p.type === 'xanh') ? xanhIcon : doIcon;
+                    var iconChon = (p.type === 'xang') ? xanhIcon : doIcon;
                     
                     var marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)], {icon: iconChon}).addTo(map);
                     
