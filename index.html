@@ -13,46 +13,55 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: -apple-system, system-ui, sans-serif; background: #f4f4f4; }
+        body { margin: 0; padding: 0; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; }
         #map { height: 100vh; width: 100vw; z-index: 1; }
 
-        /* Nút định vị */
+        /* Nút định vị - Đẩy lên cao hơn để không vướng */
         .locate-btn {
-            position: fixed; bottom: 180px; right: 15px; z-index: 1000;
+            position: fixed; bottom: 80px; right: 15px; z-index: 1000;
             background: white; width: 50px; height: 50px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: none; font-size: 24px; cursor: pointer;
         }
 
-        /* Thẻ thông tin người phát hành (Nằm trên bảng cứu hộ) */
+        /* Thẻ thông tin người phát hành */
         .credits {
-            position: fixed; bottom: 135px; left: 10px; z-index: 1001;
-            background: rgba(255, 255, 255, 0.95); padding: 5px 12px;
-            border-radius: 15px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            border: 1px solid #eee;
+            position: fixed; top: 10px; left: 10px; z-index: 1001;
+            background: rgba(255, 255, 255, 0.9); padding: 5px 12px;
+            border-radius: 10px; font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .credits a { color: #1877F2; text-decoration: none; font-weight: bold; }
 
-        /* Danh sách cứu hộ nhanh */
-        .emergency-list {
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
-            background: white; padding: 15px 15px 25px 15px;
-            border-radius: 20px 20px 0 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        /* Danh sách cứu hộ - Có thể thu gọn */
+        .emergency-container {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 1002;
+            background: white; border-radius: 20px 20px 0 0;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.15);
+            transform: translateY(180px); /* Mặc định ẩn 1 phần */
         }
+        .emergency-container.open { transform: translateY(0); }
+
+        .handle {
+            height: 40px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; background: #f8f9fa; border-radius: 20px 20px 0 0;
+        }
+        .handle-bar { width: 40px; height: 5px; background: #ccc; border-radius: 3px; }
+
+        .emergency-content { padding: 0 15px 20px 15px; max-height: 250px; overflow-y: auto; }
         .emergency-item {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+            padding: 12px 0; border-bottom: 1px solid #f0f0f0;
         }
         .btn-call-quick {
             background: #d32f2f; color: white; text-decoration: none;
-            padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 13px;
+            padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 13px;
         }
 
         .popup-content { min-width: 180px; text-align: center; }
         .btn-call {
             display: block; background: #28a745; color: white !important;
-            padding: 10px; border-radius: 8px; text-decoration: none;
-            margin-top: 10px; font-weight: bold;
+            padding: 10px; border-radius: 8px; text-decoration: none; margin-top: 10px; font-weight: bold;
         }
     </style>
 </head>
@@ -63,25 +72,38 @@
     <button class="locate-btn" onclick="findMe()">📍</button>
 
     <div class="credits">
-        🚀 Phát hành bởi: <b>Cao Anh Khoa</b> | 
-        <a href="https://www.facebook.com/khoa.cao.511348" target="_blank">Phản hồi Facebook</a>
+        🚀 <b>Cao Anh Khoa</b> | <a href="https://www.facebook.com/khoa.cao.511348" target="_blank">FB</a>
     </div>
 
-    <div class="emergency-list">
-        <div style="font-weight: bold; margin-bottom: 8px; color: #d32f2f; font-size: 15px;">🚨 CỨU HỘ KHẨN CẤP</div>
-        
-        <div class="emergency-item">
-            <div><b>Đội Cứu Hộ 01</b><br><small>Khu vực Trung tâm</small></div>
-            <a href="tel:0905123456" class="btn-call-quick">GỌI</a>
+    <div class="emergency-container" id="emergencyBox">
+        <div class="handle" onclick="toggleEmergency()">
+            <div style="font-weight: bold; color: #d32f2f; font-size: 14px; position: absolute; left: 15px;">🚨 CỨU HỘ KHẨN CẤP</div>
+            <div class="handle-bar"></div>
         </div>
         
-        <div class="emergency-item">
-            <div><b>Vá lốp lưu động</b><br><small>Phục vụ 24/24</small></div>
-            <a href="tel:0123456789" class="btn-call-quick">GỌI</a>
+        <div class="emergency-content">
+            <div class="emergency-item">
+                <div><b>Đội Cứu Hộ 01</b><br><small>Trung tâm TP Huế</small></div>
+                <a href="tel:0905123456" class="btn-call-quick">GỌI</a>
+            </div>
+            
+            <div class="emergency-item">
+                <div><b>Vá lốp lưu động</b><br><small>Hỗ trợ 24/7</small></div>
+                <a href="tel:0123456789" class="btn-call-quick">GỌI</a>
+            </div>
+            
+            <div style="text-align: center; font-size: 11px; color: #999; margin-top: 15px;">
+                Bấm vào thanh tiêu đề để đóng/mở danh sách
+            </div>
         </div>
     </div>
 
     <script>
+        // 1. Đóng/mở danh sách
+        function toggleEmergency() {
+            document.getElementById('emergencyBox').classList.toggle('open');
+        }
+
         const hueBounds = L.latLngBounds(L.latLng(16.3500, 107.5000), L.latLng(16.5500, 107.7000));
 
         const map = L.map('map', {
@@ -113,4 +135,51 @@
         }
 
         map.on('locationfound', function(e) {
-            if
+            if (userMarker) map.removeLayer(userMarker);
+            if (userCircle) map.removeLayer(userCircle);
+            if (hueBounds.contains(e.latlng)) {
+                userCircle = L.circle(e.latlng, { radius: e.accuracy, color: '#1E88E5', weight: 1, fillOpacity: 0.1 }).addTo(map);
+                userMarker = L.marker(e.latlng).addTo(map).bindPopup("Bạn đang ở đây").openPopup();
+                map.flyTo(e.latlng, 18); 
+            } else {
+                alert("Bạn đang ở ngoài phạm vi Huế!");
+            }
+        });
+
+        const csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQm_NcV6KGhVxRsIrv2xN3GMf03tD59mpn7Z2ogkdT-_9oR9JO5cCVtUGuQWCs0jwwF_HYFgCds-YHd/pub?output=csv';
+
+        function renderMarkers(data) {
+            data.forEach(p => {
+                if (p.lat && p.lng) {
+                    const icon = (p.type === 'xanh') ? xanhIcon : doIcon;
+                    const marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)], {icon: icon}).addTo(map);
+                    
+                    const popupHtml = `
+                        <div class="popup-content">
+                            <b style="font-size:16px; color:#d32f2f;">${p.name}</b><br>
+                            <div style="text-align:left; font-size:13px; margin-top:8px;">
+                                📍 <b>Địa chỉ:</b> ${p.address || 'Đang cập nhật'}<br>
+                                📝 <b>Ghi chú:</b> ${p.note || 'Không có'}<br>
+                                ⏰ <b>Giờ:</b> ${p.hours || '24/24'}
+                            </div>
+                            <a href="tel:${p.phone}" class="btn-call">📞 GỌI NGAY: ${p.phone}</a>
+                        </div>`;
+                    marker.bindPopup(popupHtml);
+                }
+            });
+        }
+
+        Papa.parse(csv_url, {
+            download: true, header: true,
+            complete: function(results) {
+                localStorage.setItem('rescueData', JSON.stringify(results.data));
+                renderMarkers(results.data);
+            },
+            error: function() {
+                const offlineData = localStorage.getItem('rescueData');
+                if (offlineData) renderMarkers(JSON.parse(offlineData));
+            }
+        });
+    </script>
+</body>
+</html>
