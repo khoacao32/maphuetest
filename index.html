@@ -101,17 +101,33 @@ var map = L.map('map', {
         L.control.layers(baseMaps).addTo(map);
         L.control.zoom({ position: 'topright' }).addTo(map); // Chuyển nút +/- sang góc trên bên phải
 
-        // 3. Xử lý Định vị người dùng
-        var userCircle;
+        // 3. Hàm Định vị và Zoom (Giữ chặt giới hạn Huế)
+        var userMarker;
         function findMe() {
-            map.locate({setView: true, maxZoom: 16});
+            map.locate({
+                setView: false, // Tắt tự động để mình kiểm soát bằng code dưới
+                enableHighAccuracy: true
+            });
         }
 
         map.on('locationfound', function(e) {
-            if (userCircle) map.removeLayer(userCircle);
-            userCircle = L.circle(e.latlng, {
-                radius: 15, color: '#1976D2', fillColor: '#2196F3', fillOpacity: 0.5
-            }).addTo(map).bindPopup("Bạn đang ở đây").openPopup();
+            if (userMarker) map.removeLayer(userMarker);
+            
+            // Cắm ghim vị trí người dùng
+            userMarker = L.marker(e.latlng).addTo(map).bindPopup("Bạn đang ở đây!").openPopup();
+            
+            // KIỂM TRA: Nếu vị trí nằm TRONG hàng rào Huế thì mới cho phép bay tới
+            if (hueBounds.contains(e.latlng)) {
+                map.flyTo(e.latlng, 16); 
+            } else {
+                alert("Vị trí của bạn nằm ngoài vùng hỗ trợ tại TP Huế!");
+                // Nếu ngoài Huế, chỉ zoom nhẹ để người dùng thấy cái ghim phía xa
+                map.setZoom(13); 
+            }
+        });
+
+        map.on('locationerror', function() {
+            alert("Lỗi: Không lấy được vị trí. Hãy bật GPS và cho phép truy cập!");
         });
 
         // 4. Đọc dữ liệu từ Google Sheets
