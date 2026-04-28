@@ -130,99 +130,99 @@
     </div>
 
     <script>
-        // 1. Cấu hình vùng giới hạn Huế
-        var hueBounds = L.latLngBounds(L.latLng(16.3500, 107.5000), L.latLng(16.5500, 107.7000));
+     <script>
+    // 1. Cấu hình bản đồ
+    var map = L.map('map', { 
+        zoomControl: false, 
+        minZoom: 13, 
+        maxZoom: 22 
+    }).setView([16.4637, 107.5909], 14);
 
-        var map = L.map('map', {
-            zoomControl: false,
-            maxBounds: hueBounds,
-            maxBoundsViscosity: 1.0,
-            minZoom: 13,
-            maxZoom: 22 // Cho phép người dùng zoom thoải mái đến mức 22
-        }).setView([16.4637, 107.5909], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxNativeZoom: 19, 
+        maxZoom: 22
+    }).addTo(map);
 
-        // 2. Lớp nền bản đồ (Quan trọng: Sửa lỗi đen màn hình khi zoom sâu)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxNativeZoom: 19, // Ảnh bản đồ thực tế chỉ đến mức 19
-            maxZoom: 22        // Nhưng code sẽ tự phóng to ảnh mức 19 lên đến mức 22
-        }).addTo(map);
+    // 2. Định nghĩa Icon (Đảm bảo link icon hoạt động)
+    var xanhIcon = new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
 
-        L.control.zoom({ position: 'topright' }).addTo(map);
+    var doIcon = new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
 
-        // 3. Icon màu
-        var xanhIcon = new L.Icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-        });
-
-        var doIcon = new L.Icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-        });
-
-        // 4. Định vị GPS
-        var userMarker, userCircle;
-        function findMe() {
-            map.locate({ setView: false, enableHighAccuracy: true });
-        }
-
-        map.on('locationfound', function(e) {
-            if (userMarker) map.removeLayer(userMarker);
-            if (userCircle) map.removeLayer(userCircle);
-
-            if (hueBounds.contains(e.latlng)) {
-                userCircle = L.circle(e.latlng, { radius: e.accuracy, color: '#007bff', fillOpacity: 0.1 }).addTo(map);
-                userMarker = L.marker(e.latlng).addTo(map).bindPopup("Bạn đang ở đây").openPopup();
-                map.flyTo(e.latlng, 18); 
-            } else {
-                alert("Bạn đang ở ngoài vùng hỗ trợ (Huế)!");
+    // 3. Hàm vẽ Marker (Sửa lỗi hiển thị)
+    function renderMarkers(data) {
+        // Xóa các marker cũ nếu có để tránh trùng lặp khi update
+        map.eachLayer(function (layer) {
+            if (layer instanceof L.Marker && layer !== userMarker) {
+                map.removeLayer(layer);
             }
         });
 
-        // 5. Đọc dữ liệu Sheets & Offline
-        var csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQm_NcV6KGhVxRsIrv2xN3GMf03tD59mpn7Z2ogkdT-_9oR9JO5cCVtUGuQWCs0jwwF_HYFgCds-YHd/pub?output=csv';
+        data.forEach(function(p) {
+            // Ép kiểu lat, lng về số thực để Leaflet hiểu đúng vị trí
+            var lat = parseFloat(p.lat);
+            var lng = parseFloat(p.lng);
 
-        function renderMarkers(data) {
-            data.forEach(function(p) {
-                if (p.lat && p.lng) {
-                    var iconChon = (p.type === 'xang') ? xanhIcon : doIcon;
-                    var marker = L.marker([parseFloat(p.lat), parseFloat(p.lng)], {icon: iconChon}).addTo(map);
-                    
-                    var popupHtml = `
-                        <div class="popup-content">
-                            <b style="font-size:16px; color:#d32f2f;">${p.name}</b><br>
-                            <div style="text-align:left; font-size:13px; margin-top:8px;">
-                                📍 <b>Địa chỉ:</b> ${p.address || 'Đang cập nhật'}<br>
-                                📝 <b>Ghi chú:</b> ${p.note || 'Không có'}<br>
-                                ⏰ <b>Giờ:</b> ${p.hours || '24/24'}<br>
-                            </div>
-                            <a href="tel:${p.phone}" class="btn-call">📞 GỌI NGAY: ${p.phone}</a>
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}" 
-                               target="_blank" 
-                               style="display:block; text-align:center; margin-top:10px; font-size:11px; color:#666; text-decoration:none;">
-                               🗺️ Chỉ đường bằng Google Maps
-                            </a>
+            if (!isNaN(lat) && !isNaN(lng)) {
+                var iconChon = (p.type === 'xang') ? xanhIcon : doIcon;
+                var marker = L.marker([lat, lng], {icon: iconChon}).addTo(map);
+                
+                var popupHtml = `
+                    <div class="popup-content">
+                        <b style="font-size:16px; color:#d32f2f;">${p.name}</b><br>
+                        <div style="text-align:left; font-size:13px; margin-top:8px;">
+                            📍 <b>Địa chỉ:</b> ${p.address || 'Đang cập nhật'}<br>
+                            📝 <b>Ghi chú:</b> ${p.note || 'Không có'}<br>
+                            ⏰ <b>Giờ:</b> ${p.hours || '24/24'}<br>
                         </div>
-                    `;
-                    marker.bindPopup(popupHtml);
-                }
-            });
-        }
-
-        Papa.parse(csv_url, {
-            download: true,
-            header: true,
-            complete: function(results) {
-                localStorage.setItem('mapData', JSON.stringify(results.data));
-                renderMarkers(results.data);
-            },
-            error: function() {
-                var savedData = localStorage.getItem('mapData');
-                if (savedData) renderMarkers(JSON.parse(savedData));
+                        <a href="tel:${p.phone}" class="btn-call" style="display:block; background:#28a745; color:white; text-align:center; padding:10px; border-radius:5px; text-decoration:none; margin-top:10px; font-weight:bold;">📞 GỌI NGAY: ${p.phone}</a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" 
+                           target="_blank" 
+                           style="display:block; text-align:center; margin-top:10px; font-size:11px; color:#666; text-decoration:none;">
+                           🗺️ Chỉ đường bằng Google Maps
+                        </a>
+                    </div>
+                `;
+                marker.bindPopup(popupHtml);
             }
         });
-    </script>
+    }
+
+    // 4. LUỒNG XỬ LÝ DỮ LIỆU (QUAN TRỌNG)
+    var csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQm_NcV6KGhVxRsIrv2xN3GMf03tD59mpn7Z2ogkdT-_9oR9JO5cCVtUGuQWCs0jwwF_HYFgCds-YHd/pub?output=csv';
+
+    // BƯỚC A: Hiện ngay nếu trong máy có sẵn (Dùng cho cả lúc có mạng và mất mạng)
+    var savedData = localStorage.getItem('mapData');
+    if (savedData) {
+        renderMarkers(JSON.parse(savedData));
+    }
+
+    // BƯỚC B: Tải mới từ Sheets để cập nhật
+    Papa.parse(csv_url, {
+        download: true,
+        header: true,
+        complete: function(results) {
+            localStorage.setItem('mapData', JSON.stringify(results.data));
+            renderMarkers(results.data); // Vẽ lại bản mới nhất
+        }
+    });
+
+    // 5. Định vị GPS
+    var userMarker;
+    function findMe() {
+        map.locate({ setView: true, maxZoom: 18 });
+    }
+    map.on('locationfound', function(e) {
+        if (userMarker) map.removeLayer(userMarker);
+        userMarker = L.marker(e.latlng).addTo(map).bindPopup("Bạn đang ở đây").openPopup();
+    });
+</script>
 </body>
 </html>
