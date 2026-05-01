@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hue-map-cache-v1';
+const CACHE_NAME = 'hue-map-cache-v2'; // đổi tên mỗi lần cập nhật để ép xóa cache cũ
 const urlsToCache = [
   'index.html',
   'manifest.json',
@@ -8,14 +8,14 @@ const urlsToCache = [
   'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js'
 ];
 
-// Cài đặt service worker và cache file
+// Cài đặt service worker và cache file tĩnh
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// Kích hoạt và dọn cache cũ nếu có
+// Kích hoạt và dọn cache cũ
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -26,22 +26,30 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Bắt request và trả về từ cache nếu có
+// Bắt request
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  // Không cache dữ liệu từ Google Sheets
+  if (url.hostname.includes('docs.google.com')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Cache cho các file tĩnh khác
   event.respondWith(
     caches.match(event.request).then(resp => {
       return resp || fetch(event.request).then(response => {
-        // Cache động cho các request mới
         return caches.open(CACHE_NAME).then(cache => {
           cache.put(event.request, response.clone());
           return response;
         });
-      }).catch(() => {
-        // Nếu offline và không có cache, trả về fallback
-        if (event.request.destination === 'document') {
-          return caches.match('index.html');
-        }
       });
+    }).catch(() => {
+      // Nếu offline và không có cache, fallback về index.html
+      if (event.request.destination === 'document') {
+        return caches.match('index.html');
+      }
     })
   );
 });
