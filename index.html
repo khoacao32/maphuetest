@@ -122,7 +122,7 @@
         }
 
         // 5. Dữ liệu offline/online
-        var csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQm_NcV6KGhVxRsIrv2xN3GMf03tD59mpn7Z2ogkdT-_9oR9JO5cCVtUGuQWCs0jwwF_HYFgCds-YHd/pub?output=csv';
+        var csv_url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQm_NcV6KGhVxRsIrv2xN3GMf03tD59mpn7Z2ogkdT-_9oR9JO5cCVtUGuQWCs0jwwF_HYFgCds-YHd/pub?output=csv' + Date.now();
 
         var localData = localStorage.getItem('hueData');
         if (localData) renderMarkers(JSON.parse(localData));
